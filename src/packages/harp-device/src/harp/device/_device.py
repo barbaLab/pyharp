@@ -131,14 +131,26 @@ class Device:
         # ``registers`` as read-only; it shadows the base descriptor on the subclass.
         type.__setattr__(cls, "registers", CoreRegistersNamespace(merged.values()))
 
-    def __init__(self, transport: ITransport, *, raise_on_error: bool = True) -> None:
+    def __init__(
+        self,
+        transport: ITransport,
+        *,
+        reply_timeout: float | None = None,
+        raise_on_error: bool = True,
+    ) -> None:
+        if reply_timeout is not None and reply_timeout <= 0:
+            raise ValueError("reply_timeout must be greater than zero")
         self._transport = transport
+        self._reply_timeout = (
+            reply_timeout if reply_timeout is not None else type(self).REPLY_TIMEOUT
+        )
         self.raise_on_error = raise_on_error
         self._framer = HarpFramer()
         self._pending: dict[int, queue.SimpleQueue] = {}
         self._pending_lock = threading.Lock()
         self._running = False
         self._thread: threading.Thread | None = None
+        self._transport_error: TransportError | None = None
 
         # Event subscriptions, delivered off the reader thread (see _event_loop).
         self._subscriptions: dict[int, list[Subscription]] = {}
@@ -154,6 +166,7 @@ class Device:
 
     def open(self) -> Self:
         """Open the transport, start the reader thread and validate identity."""
+        self._transport_error = None
         self._transport.open()
         self._running = True
         self._event_thread = threading.Thread(
@@ -185,6 +198,9 @@ class Device:
 
     def close(self) -> None:
         self._running = False
+        # Closing first wakes transports whose read timeout is longer than the
+        # join timeout (notably TCP) and makes shutdown deterministic.
+        self._transport.close()
         if self._thread is not None:
             self._thread.join(timeout=2.0)
             self._thread = None
@@ -192,7 +208,6 @@ class Device:
             self._event_queue.put(None)  # wake the loop so it can exit
             self._event_thread.join(timeout=2.0)
             self._event_thread = None
-        self._transport.close()
         with self._sub_lock:
             self._subscriptions.clear()
             self._registers.clear()
@@ -350,10 +365,16 @@ class Device:
         while self._running:
             try:
                 chunk = self._transport.read()
-            except TransportError:
+            except TransportError as exc:
                 if self._running:
-                    raise
-                break  # expected while shutting down
+                    self._transport_error = exc
+                    _logger.error("Transport reader stopped: %s", exc)
+                    with self._pending_lock:
+                        pending = list(self._pending.values())
+                    for response_queue in pending:
+                        response_queue.put(exc)
+                self._running = False
+                break
             if not chunk:
                 continue
 
@@ -374,13 +395,19 @@ class Device:
         self._event_queue.put(msg)
 
     def _request(self, address: int, frame: bytes) -> HarpMessage:
+        if self._transport_error is not None:
+            raise self._transport_error
+
         q: queue.SimpleQueue = queue.SimpleQueue()
         with self._pending_lock:
             self._pending[address] = q
         try:
             self._transport.write(frame)
             try:
-                msg = q.get(timeout=self.REPLY_TIMEOUT)
+                response = q.get(timeout=self._reply_timeout)
+                if isinstance(response, TransportError):
+                    raise response
+                msg = response
                 if msg.has_error and self.raise_on_error:
                     raise RuntimeError(
                         f"Device returned error for register address {address} "
@@ -390,7 +417,7 @@ class Device:
             except queue.Empty as exc:
                 raise TimeoutError(
                     f"No reply from device for register address {address} "
-                    f"within {self.REPLY_TIMEOUT}s"
+                    f"within {self._reply_timeout}s"
                 ) from exc
         finally:
             with self._pending_lock:

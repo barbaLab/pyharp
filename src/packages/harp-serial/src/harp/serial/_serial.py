@@ -56,6 +56,7 @@ def open_serial_device(
     *,
     port: str,
     baudrate: int = DEFAULT_BAUDRATE,
+    reply_timeout: float | None = None,
     raise_on_error: bool = True,
 ) -> D:
     """Build ``device`` over a serial transport and open it.
@@ -67,4 +68,12 @@ def open_serial_device(
             dev.read(behavior.WhoAmI)
     """
     transport = SerialTransport(port, baudrate)
-    return device(transport, raise_on_error=raise_on_error).open()
+    try:
+        return device(
+            transport,
+            reply_timeout=reply_timeout,
+            raise_on_error=raise_on_error,
+        ).open()
+    except Exception:
+        transport.close()
+        raise
