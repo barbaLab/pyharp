@@ -11,6 +11,7 @@ keywords = [
     "harp-protocol",
     "data-acquisition",
     "serial",
+    "tcp",
     "hardware",
     "device-control",
 ]
@@ -33,6 +34,7 @@ dependencies = [
     "harp-protocol",
     "harp-device",
     "harp-serial",
+    "harp-tcp",
     "harp-data",
 ]
 
@@ -57,6 +59,7 @@ include = ["harp*"]
 harp-protocol = { workspace = true }
 harp-device = { workspace = true }
 harp-serial = { workspace = true }
+harp-tcp = { workspace = true }
 harp-data = { workspace = true }
 harp-benchmarks = { workspace = true }
 
@@ -85,6 +88,7 @@ dev = [
     "harp-protocol",
     "harp-device",
     "harp-serial",
+    "harp-tcp",
     "harp-data",
     "harp-benchmarks",
     "typing-extensions>=4.15.0",
@@ -117,6 +121,7 @@ include = [
     "src/packages/harp-protocol/src",
     "src/packages/harp-device/src",
     "src/packages/harp-serial/src",
+    "src/packages/harp-tcp/src",
     "src/packages/harp-data/src",
 ]
 exclude = [

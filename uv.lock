@@ -21,6 +21,7 @@ members = [
     "harp-device",
     "harp-protocol",
     "harp-serial",
+    "harp-tcp",
 ]
 
 [[package]]
@@ -319,6 +320,7 @@ dependencies = [
     { name = "harp-device" },
     { name = "harp-protocol" },
     { name = "harp-serial" },
+    { name = "harp-tcp" },
 ]
 
 [package.dev-dependencies]
@@ -329,6 +331,7 @@ dev = [
     { name = "harp-device" },
     { name = "harp-protocol" },
     { name = "harp-serial" },
+    { name = "harp-tcp" },
     { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -351,6 +354,7 @@ requires-dist = [
     { name = "harp-device", editable = "src/packages/harp-device" },
     { name = "harp-protocol", editable = "src/packages/harp-protocol" },
     { name = "harp-serial", editable = "src/packages/harp-serial" },
+    { name = "harp-tcp", editable = "src/packages/harp-tcp" },
 ]
 
 [package.metadata.requires-dev]
@@ -361,6 +365,7 @@ dev = [
     { name = "harp-device", editable = "src/packages/harp-device" },
     { name = "harp-protocol", editable = "src/packages/harp-protocol" },
     { name = "harp-serial", editable = "src/packages/harp-serial" },
+    { name = "harp-tcp", editable = "src/packages/harp-tcp" },
     { name = "pyright", specifier = ">=1.1.411" },
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "pytest-cov", specifier = ">=6.1.1" },
@@ -460,6 +465,20 @@ requires-dist = [
     { name = "harp-device", editable = "src/packages/harp-device" },
     { name = "harp-protocol", editable = "src/packages/harp-protocol" },
     { name = "pyserial", specifier = ">=3.5" },
+]
+
+[[package]]
+name = "harp-tcp"
+source = { editable = "src/packages/harp-tcp" }
+dependencies = [
+    { name = "harp-device" },
+    { name = "harp-protocol" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "harp-device", editable = "src/packages/harp-device" },
+    { name = "harp-protocol", editable = "src/packages/harp-protocol" },
 ]
 
 [[package]]

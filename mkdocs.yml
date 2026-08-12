@@ -83,6 +83,7 @@ nav:
   - API:
     - Protocol: api/protocol.md
     - Serial: api/serial.md
+    - TCP: api/tcp.md
     - Device: api/device.md
     - Data: api/data.md
 

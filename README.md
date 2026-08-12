@@ -4,13 +4,16 @@
 
 # harp
 
-This project includes four main packages:
+This project includes five main packages:
 
  - **harp-protocol**: Provides the core protocol definitions and utilities for the Harp protocol.
    See [Protocol API Documentation](https://harp-tech.org/pyharp/api/protocol) for details.
 
  - **harp-serial**: Implements serial communication functionalities for generic Harp devices.
    See [Serial API Documentation](https://harp-tech.org/pyharp/api/serial) for more information.
+
+ - **harp-tcp**: Accepts and discovers TCP connections initiated by ESP32 Harp devices.
+   See [TCP API Documentation](https://harp-tech.org/pyharp/api/tcp) for more information.
 
  - **harp-device**: Implements the transport-agnostic `Device` interface, the common register map, and the shared registers and enums.
    See [Device API Documentation](https://harp-tech.org/pyharp/api/device) for details.
@@ -21,7 +24,7 @@ This project includes four main packages:
 ## Installation
 
 All packages are published to PyPI. The `harp` package is a metadata package with no code of
-its own — it just depends on the four packages above, so it's the easiest way to get everything:
+its own — it just depends on the five packages above, so it's the easiest way to get everything:
 
 ```sh
 pip install harp
@@ -39,12 +42,14 @@ I/O), install just the packages you need — each one only pulls in what it actu
 | `harp-protocol` | Core protocol types: registers, messages, payload parsing | — |
 | `harp-device` | Transport-agnostic `Device` class, common register map | `harp-protocol` |
 | `harp-serial` | Serial (COM/tty) transport for `Device` | `harp-protocol`, `harp-device` |
+| `harp-tcp` | ESP32 callback and discovery TCP transport | `harp-protocol`, `harp-device` |
 | `harp-data` | Parse register binary dumps into pandas DataFrames | `harp-protocol` |
 
 ```sh
 pip install harp-protocol
 pip install harp-device
 pip install harp-serial
+pip install harp-tcp
 pip install harp-data
 ```
 
@@ -53,7 +58,7 @@ pip install harp-data
 ## Quickstart
 
 There are two ways you'll typically use `harp`: talking to a **live device** over a
-serial connection, or reading **data recorded to disk**.
+serial or TCP connection, or reading **data recorded to disk**.
 
 **Talk to a live device.** Open a connection and read/write registers by class:
 
@@ -66,6 +71,10 @@ with open_serial_device(Device, port="/dev/ttyUSB0") as device:
     print("WhoAmI:", device.read(WhoAmI).parsed)
     device.write(OperationControl, OperationControlPayload(operation_mode=OperationMode.ACTIVE))
 ```
+
+ESP32 Harp firmware initiates its TCP connection to the configured controller
+endpoint. Use `listen_tcp_device` or `listen_tcp_devices` from `harp.tcp` to
+accept those callbacks on the Python host.
 
 **Read a recorded session.** Point a `DatasetReader` at a dataset folder and read
 registers into pandas DataFrames — no hardware required:
