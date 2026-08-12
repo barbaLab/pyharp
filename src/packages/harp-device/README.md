@@ -40,7 +40,9 @@ Registers are then reached by name through `device.registers`
 registers — see the [device examples](https://harp-tech.org/pyharp/examples/).
 
 A new transport is just an object implementing the `ITransport` protocol
-(`open`/`write`/`read`/`close`).
+(`open`/`write`/`read`/`close`). `Device` owns the Harp reply timeout as well as
+the protocol behavior; pass `reply_timeout=` when constructing it directly or
+through a transport factory.
 
 ## Generating a device from a `device.yml`
 

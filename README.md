@@ -60,7 +60,9 @@ pip install harp-data
 There are two ways you'll typically use `harp`: talking to a **live device** over a
 serial or TCP connection, or reading **data recorded to disk**.
 
-**Talk to a live device.** Open a connection and read/write registers by class:
+**Talk to a live device.** Serial and TCP use the same `Device` class and the
+same register API. Only connection establishment differs: Python opens a serial
+port, while ESP32 firmware opens the TCP connection and Python accepts it.
 
 ```python
 from harp.device import Device, WhoAmI, OperationControl, OperationControlPayload, OperationMode
@@ -72,9 +74,19 @@ with open_serial_device(Device, port="/dev/ttyUSB0") as device:
     device.write(OperationControl, OperationControlPayload(operation_mode=OperationMode.ACTIVE))
 ```
 
-ESP32 Harp firmware initiates its TCP connection to the configured controller
-endpoint. Use `listen_tcp_device` or `listen_tcp_devices` from `harp.tcp` to
-accept those callbacks on the Python host.
+The equivalent TCP session changes only the factory and endpoint arguments:
+
+```python
+from harp.device import Device, WhoAmI
+from harp.tcp import accept_tcp_device
+
+# Configure the ESP32 to connect to this host and port.
+with accept_tcp_device(Device, host="0.0.0.0", port=9999) as device:
+    print("WhoAmI:", device.read(WhoAmI).parsed)
+```
+
+Use `accept_tcp_devices` when several ESP32 devices may connect during a bounded
+discovery window.
 
 **Read a recorded session.** Point a `DatasetReader` at a dataset folder and read
 registers into pandas DataFrames — no hardware required:
